@@ -27,6 +27,7 @@ function Dashboard() {
     dateFilter,
     setDateFilter,
     customDateRange,
+    setCustomDateRange,
     searchQuery,
     setSearchQuery,
     statusFilter,
@@ -49,6 +50,8 @@ function Dashboard() {
       <Header
         dateFilter={dateFilter}
         onDateFilterChange={setDateFilter}
+        customDateRange={customDateRange}
+        onCustomDateChange={setCustomDateRange}
         onRefresh={refresh}
         isRefreshing={isRefreshing}
         lastUpdated={lastUpdated}
@@ -59,15 +62,15 @@ function Dashboard() {
       <main className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto">
         {/* Error */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-card text-red-700">
+          <div className="p-4 glass-card border-error/50 text-error">
             <p className="font-medium">Error al cargar datos</p>
-            <p className="text-sm mt-1">{error}</p>
+            <p className="text-sm mt-1 text-error/80">{error}</p>
           </div>
         )}
 
         {/* Sin conexión */}
         {!isOnline && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-card text-amber-700 text-sm">
+          <div className="p-3 glass-card border-warning/50 text-warning text-sm">
             Sin conexión a internet - Mostrando última información guardada
           </div>
         )}
@@ -86,6 +89,9 @@ function Dashboard() {
         {/* Alertas */}
         <Alerts alerts={stats.alerts} />
 
+        {/* Métricas avanzadas */}
+        <AdvancedMetrics metrics={stats.advancedMetrics} />
+
         {/* Gráficos */}
         {isRefreshing ? (
           <SkeletonChart />
@@ -98,12 +104,8 @@ function Dashboard() {
             statusDistribution={stats.statusDistribution}
             districtDistribution={stats.districtDistribution}
             originDistribution={stats.originDistribution}
-            disqualificationReasons={stats.disqualificationReasons}
           />
         )}
-
-        {/* Métricas avanzadas */}
-        <AdvancedMetrics metrics={stats.advancedMetrics} />
 
         {/* Insights */}
         <Insights insights={stats.insights} />

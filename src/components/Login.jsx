@@ -15,15 +15,21 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md" padding="lg">
+    <div className="min-h-screen flex items-center justify-center bg-dark-900 p-4">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-radial from-accent-cyan/5 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-radial from-accent-magenta/5 via-transparent to-transparent translate-x-1/2" />
+
+      <Card className="w-full max-w-md relative" padding="lg">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🥗</div>
-          <h1 className="text-2xl font-bold text-text-primary">
+          <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-accent-cyan to-accent-magenta flex items-center justify-center text-4xl mb-4 shadow-glow-cyan">
+            🥗
+          </div>
+          <h1 className="text-2xl font-bold text-gray-100">
             NutraClínics
           </h1>
-          <p className="text-text-secondary mt-1">
+          <p className="text-gray-400 mt-1">
             Dashboard de Gestión
           </p>
         </div>
@@ -32,7 +38,7 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Error */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-button text-red-700 text-sm">
+            <div className="p-3 bg-error/10 border border-error/30 rounded-button text-error text-sm">
               {error}
             </div>
           )}
@@ -54,7 +60,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-9 text-gray-500 hover:text-gray-300 transition-colors"
             >
               {showPassword ? (
                 <EyeOff className="w-5 h-5" />
@@ -78,8 +84,8 @@ export default function Login() {
         </form>
 
         {/* Footer */}
-        <p className="text-center text-xs text-text-secondary mt-8">
-          Clínica nutricional en Lima, Perú
+        <p className="text-center text-xs text-gray-500 mt-8">
+          Clínica nutricional • Lima, Perú
         </p>
       </Card>
     </div>

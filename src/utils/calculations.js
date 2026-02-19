@@ -256,14 +256,16 @@ export function calculateAdvancedMetrics(leads) {
   });
   const avgTimeToSchedule = scheduledLeads.length > 0 ? totalDays / scheduledLeads.length : null;
 
-  // Tasa de No-Show
-  const attended = leads.filter(l => l['Estado CRM'] === 'Asistió').length;
+  // Tasa de No-Show (considera que quienes compraron también asistieron)
+  const attendedStates = ['Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró'];
+  const attended = leads.filter(l => attendedStates.includes(l['Estado CRM'])).length;
   const noShow = leads.filter(l => l['Estado CRM'] === 'No Asistió').length;
   const totalAppointments = attended + noShow;
   const noShowRate = totalAppointments > 0 ? noShow / totalAppointments : 0;
 
   // Tasa de Cierre (Compró / Asistió)
-  const purchased = leads.filter(l => l['Estado CRM'] === 'Compró').length;
+  const purchasedStates = ['Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró'];
+  const purchased = leads.filter(l => purchasedStates.includes(l['Estado CRM'])).length;
   const closeRate = attended > 0 ? purchased / attended : 0;
 
   // Ticket Promedio

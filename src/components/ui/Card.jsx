@@ -3,6 +3,7 @@ const Card = ({
   className = '',
   padding = 'md',
   hover = false,
+  glow = null,
   onClick,
   ...props
 }) => {
@@ -13,12 +14,19 @@ const Card = ({
     lg: 'p-6 md:p-8',
   };
 
+  const glowStyles = {
+    cyan: 'hover:shadow-glow-cyan',
+    magenta: 'hover:shadow-glow-magenta',
+    green: 'hover:shadow-glow-green',
+  };
+
   return (
     <div
       onClick={onClick}
       className={`
-        bg-card rounded-card shadow-card
-        ${hover ? 'hover:shadow-card-hover transition-shadow cursor-pointer' : ''}
+        glass-card
+        ${hover ? 'hover:border-dark-500 transition-all duration-300 cursor-pointer' : ''}
+        ${glow ? glowStyles[glow] : ''}
         ${paddings[padding]}
         ${className}
       `}
@@ -36,13 +44,13 @@ export const CardHeader = ({ children, className = '' }) => (
 );
 
 export const CardTitle = ({ children, className = '' }) => (
-  <h3 className={`text-lg font-semibold text-text-primary ${className}`}>
+  <h3 className={`text-lg font-semibold text-gray-100 ${className}`}>
     {children}
   </h3>
 );
 
 export const CardDescription = ({ children, className = '' }) => (
-  <p className={`text-sm text-text-secondary mt-1 ${className}`}>
+  <p className={`text-sm text-gray-400 mt-1 ${className}`}>
     {children}
   </p>
 );

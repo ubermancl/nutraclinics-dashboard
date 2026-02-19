@@ -2,11 +2,12 @@ import { forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const variants = {
-  primary: 'bg-primary-700 hover:bg-primary-800 text-white',
-  secondary: 'bg-secondary-700 hover:bg-secondary-800 text-white',
-  outline: 'border border-gray-300 hover:bg-gray-50 text-gray-700',
-  ghost: 'hover:bg-gray-100 text-gray-700',
-  danger: 'bg-error hover:bg-red-700 text-white',
+  primary: 'bg-gradient-to-r from-accent-cyan to-accent-purple hover:opacity-90 text-dark-900 font-semibold',
+  secondary: 'bg-dark-700 hover:bg-dark-600 text-gray-100 border border-dark-600',
+  outline: 'border border-dark-500 hover:bg-dark-700 text-gray-300',
+  ghost: 'hover:bg-dark-700 text-gray-400 hover:text-gray-100',
+  danger: 'bg-error hover:bg-red-600 text-white',
+  success: 'bg-success hover:bg-emerald-600 text-white',
 };
 
 const sizes = {
@@ -31,8 +32,8 @@ const Button = forwardRef(({
       className={`
         inline-flex items-center justify-center gap-2
         font-medium rounded-button
-        transition-colors duration-200
-        focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+        transition-all duration-200
+        focus:outline-none focus:ring-2 focus:ring-accent-cyan focus:ring-offset-2 focus:ring-offset-dark-900
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variants[variant]}
         ${sizes[size]}

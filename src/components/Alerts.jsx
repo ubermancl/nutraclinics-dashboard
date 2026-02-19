@@ -17,15 +17,20 @@ export default function Alerts({ alerts }) {
       {/* Header */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-dark-700/50 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-warning" />
-          <span className="font-semibold text-text-primary">
-            Alertas ({alerts.length})
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-warning/10">
+            <AlertCircle className="w-5 h-5 text-warning" />
+          </div>
+          <span className="font-semibold text-gray-100">
+            Alertas
+          </span>
+          <span className="px-2 py-0.5 bg-dark-600 text-gray-300 text-xs rounded-full">
+            {alerts.length}
           </span>
           {errorAlerts.length > 0 && (
-            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">
+            <span className="px-2 py-0.5 bg-error/20 text-error text-xs rounded-full animate-pulse">
               {errorAlerts.length} urgente{errorAlerts.length > 1 ? 's' : ''}
             </span>
           )}
@@ -39,15 +44,15 @@ export default function Alerts({ alerts }) {
 
       {/* Content */}
       {!isCollapsed && (
-        <div className="border-t divide-y">
+        <div className="border-t border-dark-600">
           {/* Alertas de error (urgentes) */}
           {errorAlerts.map((alert, index) => (
             <div
               key={`error-${index}`}
-              className="p-4 bg-red-50 flex items-center gap-3"
+              className="p-4 bg-error/5 border-l-2 border-error flex items-center gap-3"
             >
               <span className="text-lg">{alert.icon}</span>
-              <span className="text-sm text-red-800 font-medium">
+              <span className="text-sm text-gray-200 font-medium">
                 {alert.message}
               </span>
             </div>
@@ -57,10 +62,10 @@ export default function Alerts({ alerts }) {
           {warningAlerts.map((alert, index) => (
             <div
               key={`warning-${index}`}
-              className="p-4 bg-amber-50 flex items-center gap-3"
+              className="p-4 bg-warning/5 border-l-2 border-warning flex items-center gap-3"
             >
               <span className="text-lg">{alert.icon}</span>
-              <span className="text-sm text-amber-800">
+              <span className="text-sm text-gray-300">
                 {alert.message}
               </span>
             </div>

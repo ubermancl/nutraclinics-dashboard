@@ -2,27 +2,36 @@ import { Toaster } from 'react-hot-toast';
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen bg-background">
-      {children}
+    <div className="min-h-screen bg-dark-900">
+      {/* Background gradients */}
+      <div className="fixed inset-0 bg-gradient-radial from-accent-cyan/5 via-transparent to-transparent opacity-50" />
+      <div className="fixed inset-0 bg-gradient-radial from-accent-magenta/5 via-transparent to-transparent translate-x-1/2 opacity-50" />
+
+      {/* Content */}
+      <div className="relative z-10">
+        {children}
+      </div>
+
       <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#1A1A1A',
-            color: '#fff',
+            background: '#161B22',
+            color: '#F3F4F6',
+            border: '1px solid #30363D',
             borderRadius: '8px',
           },
           success: {
             iconTheme: {
-              primary: '#4CAF50',
-              secondary: '#fff',
+              primary: '#10B981',
+              secondary: '#161B22',
             },
           },
           error: {
             iconTheme: {
-              primary: '#D32F2F',
-              secondary: '#fff',
+              primary: '#EF4444',
+              secondary: '#161B22',
             },
           },
         }}

@@ -4,12 +4,10 @@ import {
   LineChart, Line,
   BarChart, Bar,
   PieChart, Pie, Cell,
-  FunnelChart, Funnel, LabelList,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { Card, CardTitle } from './ui';
-import { CHART_COLORS } from '../utils/constants';
-import { formatNumber, formatCurrency, formatPercent } from '../utils/formatters';
+import { Card } from './ui';
+import { formatNumber, formatCurrency } from '../utils/formatters';
 
 const tabs = [
   { id: 'conversion', label: 'Conversión' },
@@ -17,77 +15,70 @@ const tabs = [
   { id: 'distribution', label: 'Distribución' },
 ];
 
+// Colores para gráficos (tema oscuro)
+const CHART_COLORS = [
+  '#00D9FF', // cyan
+  '#B24BF3', // magenta
+  '#10B981', // green
+  '#F59E0B', // yellow
+  '#EC4899', // pink
+  '#8B5CF6', // purple
+  '#F97316', // orange
+  '#06B6D4', // teal
+];
+
+// Tooltip personalizado
+const CustomTooltip = ({ active, payload, label, formatter }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="glass-card p-3 text-sm">
+        <p className="text-gray-400 mb-1">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} style={{ color: entry.color }} className="font-semibold">
+            {formatter ? formatter(entry.value) : entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 // Funnel de conversión
 function ConversionFunnel({ data }) {
-  const funnelData = data.map((item, index) => ({
-    ...item,
-    fill: CHART_COLORS[index % CHART_COLORS.length],
-  }));
+  const maxCount = data[0]?.count || 1;
 
   return (
-    <div className="space-y-6">
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <FunnelChart>
-            <Tooltip
-              formatter={(value, name) => [formatNumber(value), name]}
-            />
-            <Funnel
-              dataKey="count"
-              data={funnelData}
-              isAnimationActive
-            >
-              <LabelList
-                position="right"
-                fill="#1A1A1A"
-                stroke="none"
-                dataKey="state"
-                fontSize={12}
-              />
-              <LabelList
-                position="center"
-                fill="#fff"
-                stroke="none"
-                dataKey="count"
-                fontSize={14}
-                fontWeight="bold"
-              />
-            </Funnel>
-          </FunnelChart>
-        </ResponsiveContainer>
-      </div>
+    <div className="space-y-4">
+      {data.map((item, index) => {
+        const widthPercent = (item.count / maxCount) * 100;
+        const color = CHART_COLORS[index % CHART_COLORS.length];
 
-      {/* Tabla de conversión */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-2 px-3 font-medium">Estado</th>
-              <th className="text-right py-2 px-3 font-medium">Cantidad</th>
-              <th className="text-right py-2 px-3 font-medium">% del Total</th>
-              <th className="text-right py-2 px-3 font-medium">Conversión</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((item, index) => (
-              <tr key={item.state} className="border-b last:border-0">
-                <td className="py-2 px-3 flex items-center gap-2">
-                  <span
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-                  />
-                  {item.state}
-                </td>
-                <td className="text-right py-2 px-3 font-mono">{formatNumber(item.count)}</td>
-                <td className="text-right py-2 px-3 font-mono">{item.percentOfTotal.toFixed(1)}%</td>
-                <td className="text-right py-2 px-3 font-mono">
-                  {index === 0 ? '-' : `${item.conversionFromPrevious.toFixed(1)}%`}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        return (
+          <div key={item.state} className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-300 font-medium">{item.state}</span>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-gray-100">{formatNumber(item.count)}</span>
+                {index > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-dark-600 text-gray-400">
+                    {item.conversionFromPrevious.toFixed(1)}%
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="h-8 bg-dark-700 rounded-lg overflow-hidden">
+              <div
+                className="h-full rounded-lg transition-all duration-500"
+                style={{
+                  width: `${widthPercent}%`,
+                  background: `linear-gradient(90deg, ${color} 0%, ${color}80 100%)`,
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -95,61 +86,36 @@ function ConversionFunnel({ data }) {
 // Gráficos de tendencias
 function TrendsCharts({ leadsByDay, appointmentsByDay, revenueByWeek }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Leads por día */}
       <div>
-        <h4 className="text-sm font-medium text-text-secondary mb-3">Leads por día (últimos 30 días)</h4>
+        <h4 className="text-sm font-medium text-gray-400 mb-4">Leads por día (últimos 30 días)</h4>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={leadsByDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+              <defs>
+                <linearGradient id="gradientLeads" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00D9FF" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#00D9FF" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#21262D" />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 10 }}
+                tick={{ fontSize: 10, fill: '#6E7681' }}
                 tickFormatter={(value) => value.slice(5)}
+                axisLine={{ stroke: '#30363D' }}
               />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip
-                labelFormatter={(label) => `Fecha: ${label}`}
-                formatter={(value) => [formatNumber(value), 'Leads']}
-              />
+              <YAxis tick={{ fontSize: 10, fill: '#6E7681' }} axisLine={{ stroke: '#30363D' }} />
+              <Tooltip content={<CustomTooltip formatter={(v) => `${v} leads`} />} />
               <Area
                 type="monotone"
                 dataKey="leads"
-                stroke={CHART_COLORS[0]}
-                fill={CHART_COLORS[0]}
-                fillOpacity={0.3}
+                stroke="#00D9FF"
+                strokeWidth={2}
+                fill="url(#gradientLeads)"
               />
             </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Citas por día */}
-      <div>
-        <h4 className="text-sm font-medium text-text-secondary mb-3">Citas por día</h4>
-        <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={appointmentsByDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 10 }}
-                tickFormatter={(value) => value.slice(5)}
-              />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip
-                labelFormatter={(label) => `Fecha: ${label}`}
-                formatter={(value) => [formatNumber(value), 'Citas']}
-              />
-              <Line
-                type="monotone"
-                dataKey="leads"
-                stroke={CHART_COLORS[1]}
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -157,25 +123,30 @@ function TrendsCharts({ leadsByDay, appointmentsByDay, revenueByWeek }) {
       {/* Ingresos por semana */}
       {revenueByWeek.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-text-secondary mb-3">Ingresos por semana</h4>
+          <h4 className="text-sm font-medium text-gray-400 mb-4">Ingresos por semana</h4>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueByWeek}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <defs>
+                  <linearGradient id="gradientRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#B24BF3" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#B24BF3" stopOpacity={0.3}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262D" />
                 <XAxis
                   dataKey="week"
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 10, fill: '#6E7681' }}
                   tickFormatter={(value) => value.slice(5)}
+                  axisLine={{ stroke: '#30363D' }}
                 />
                 <YAxis
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 10, fill: '#6E7681' }}
                   tickFormatter={(value) => `S/${value}`}
+                  axisLine={{ stroke: '#30363D' }}
                 />
-                <Tooltip
-                  labelFormatter={(label) => `Semana: ${label}`}
-                  formatter={(value) => [formatCurrency(value), 'Ingresos']}
-                />
-                <Bar dataKey="revenue" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
+                <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
+                <Bar dataKey="revenue" fill="url(#gradientRevenue)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -186,7 +157,7 @@ function TrendsCharts({ leadsByDay, appointmentsByDay, revenueByWeek }) {
 }
 
 // Gráficos de distribución
-function DistributionCharts({ statusDistribution, districtDistribution, originDistribution, disqualificationReasons }) {
+function DistributionCharts({ statusDistribution, districtDistribution, originDistribution }) {
   const renderDonut = (data, title) => {
     const top5 = data.slice(0, 5);
     const others = data.slice(5);
@@ -196,8 +167,8 @@ function DistributionCharts({ statusDistribution, districtDistribution, originDi
 
     return (
       <div>
-        <h4 className="text-sm font-medium text-text-secondary mb-3">{title}</h4>
-        <div className="h-48">
+        <h4 className="text-sm font-medium text-gray-400 mb-4">{title}</h4>
+        <div className="h-48 flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -206,52 +177,39 @@ function DistributionCharts({ statusDistribution, districtDistribution, originDi
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={40}
-                outerRadius={70}
-                label={({ name, percent }) => `${name.slice(0, 10)}${name.length > 10 ? '...' : ''} ${(percent * 100).toFixed(0)}%`}
-                labelLine={false}
+                innerRadius={50}
+                outerRadius={75}
+                paddingAngle={2}
               >
                 {displayData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => formatNumber(value)} />
+              <Tooltip content={<CustomTooltip formatter={formatNumber} />} />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+        {/* Legend */}
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          {displayData.slice(0, 4).map((item, index) => (
+            <div key={item.name} className="flex items-center gap-1 text-xs">
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+              />
+              <span className="text-gray-400 truncate max-w-[80px]">{item.name}</span>
+            </div>
+          ))}
         </div>
       </div>
     );
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {statusDistribution.length > 0 && renderDonut(statusDistribution, 'Por Estado CRM')}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {statusDistribution.length > 0 && renderDonut(statusDistribution, 'Por Estado')}
       {districtDistribution.length > 0 && renderDonut(districtDistribution, 'Por Distrito')}
       {originDistribution.length > 0 && renderDonut(originDistribution, 'Por Origen')}
-
-      {/* Razones de descalificación */}
-      {disqualificationReasons.length > 0 && (
-        <div>
-          <h4 className="text-sm font-medium text-text-secondary mb-3">Razones de Descalificación</h4>
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={disqualificationReasons.slice(0, 5)} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fontSize: 10 }}
-                  width={100}
-                  tickFormatter={(value) => value.length > 15 ? value.slice(0, 15) + '...' : value}
-                />
-                <Tooltip formatter={(value) => formatNumber(value)} />
-                <Bar dataKey="value" fill={CHART_COLORS[4]} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -264,23 +222,22 @@ export default function Charts({
   statusDistribution,
   districtDistribution,
   originDistribution,
-  disqualificationReasons,
 }) {
   const [activeTab, setActiveTab] = useState('conversion');
 
   return (
     <Card>
       {/* Tabs */}
-      <div className="flex border-b mb-6">
+      <div className="flex border-b border-dark-600 mb-6 -mx-4 md:-mx-6 px-4 md:px-6">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`
-              px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors
+              px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-all
               ${activeTab === tab.id
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-text-secondary hover:text-text-primary'
+                ? 'border-accent-cyan text-accent-cyan'
+                : 'border-transparent text-gray-400 hover:text-gray-200'
               }
             `}
           >
@@ -307,7 +264,6 @@ export default function Charts({
           statusDistribution={statusDistribution}
           districtDistribution={districtDistribution}
           originDistribution={originDistribution}
-          disqualificationReasons={disqualificationReasons}
         />
       )}
     </Card>
