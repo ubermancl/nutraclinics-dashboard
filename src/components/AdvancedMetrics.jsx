@@ -2,7 +2,7 @@ import { Clock, UserX, CheckCircle, Receipt, MapPin, Calendar, Clock3 } from 'lu
 import { Card } from './ui';
 import { formatPercent, formatCurrency } from '../utils/formatters';
 
-const MiniCard = ({ title, value, icon: Icon, color = 'cyan' }) => {
+const MiniCard = ({ title, value, icon: Icon, color = 'cyan', tooltip }) => {
   const colors = {
     cyan: 'text-accent-cyan bg-accent-cyan/10',
     magenta: 'text-accent-magenta bg-accent-magenta/10',
@@ -14,7 +14,7 @@ const MiniCard = ({ title, value, icon: Icon, color = 'cyan' }) => {
   };
 
   return (
-    <Card padding="sm" className="flex items-center gap-3">
+    <Card padding="sm" className="flex items-center gap-3 group relative" title={tooltip}>
       <div className={`p-2 rounded-lg ${colors[color]}`}>
         <Icon className="w-4 h-4" />
       </div>
@@ -24,6 +24,11 @@ const MiniCard = ({ title, value, icon: Icon, color = 'cyan' }) => {
           {value !== null && value !== undefined ? value : '-'}
         </p>
       </div>
+      {tooltip && (
+        <div className="absolute bottom-full left-0 mb-2 z-50 w-64 p-2.5 bg-dark-600 border border-dark-500 rounded-lg shadow-xl text-xs text-gray-300 leading-relaxed hidden group-hover:block">
+          {tooltip}
+        </div>
+      )}
     </Card>
   );
 };
@@ -46,24 +51,28 @@ export default function AdvancedMetrics({ metrics }) {
         value={avgTimeToSchedule !== null ? `${avgTimeToSchedule.toFixed(1)} días` : null}
         icon={Clock}
         color="cyan"
+        tooltip="Promedio de días entre la fecha de creación del lead y su fecha de agendamiento."
       />
       <MiniCard
         title="Tasa No-Show"
         value={formatPercent(noShowRate)}
         icon={UserX}
         color="red"
+        tooltip="No Asistió ÷ (Asistió + No Asistió). Mide qué porcentaje de los que agendaron no se presentaron a la consulta."
       />
       <MiniCard
         title="Tasa Cierre"
         value={formatPercent(closeRate)}
         icon={CheckCircle}
         color="green"
+        tooltip="Compró ÷ Asistió (incluye Cliente Activo, Recompró, Plan Terminado). Mide cuántos de los que llegaron a consulta terminaron comprando."
       />
       <MiniCard
         title="Ticket Promedio"
         value={formatCurrency(avgTicket)}
         icon={Receipt}
         color="yellow"
+        tooltip="Suma de Monto Venta Cerrada (PEN) ÷ número de ventas cerradas. Solo considera leads con monto mayor a 0."
       />
       <MiniCard
         title="Mejor Distrito"
