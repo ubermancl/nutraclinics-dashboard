@@ -135,36 +135,38 @@ export function calculateMetrics(leads, dateFilter = 'month', customStart = null
 }
 
 /**
- * Calcular datos del funnel
+ * Calcular datos del funnel (acumulativo - cuenta los que llegaron a cada etapa o la pasaron)
  */
 export function calculateFunnel(leads) {
   if (!leads || !Array.isArray(leads)) return [];
 
+  // Estados que indican que el lead llegó a cada etapa del funnel
+  const stageReached = {
+    'En Conversación': ['En Conversación', 'Precalificado', 'Descalificado', 'Link Enviado', 'Agendado', 'Asistió', 'No Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró', 'Canceló Cita', 'Requiere Humano'],
+    'Precalificado': ['Precalificado', 'Link Enviado', 'Agendado', 'Asistió', 'No Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró', 'Canceló Cita'],
+    'Link Enviado': ['Link Enviado', 'Agendado', 'Asistió', 'No Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró', 'Canceló Cita'],
+    'Agendado': ['Agendado', 'Asistió', 'No Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró', 'Canceló Cita'],
+    'Asistió': ['Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró'],
+    'Compró': ['Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró'],
+  };
+
+  // Contar leads que llegaron a cada etapa
   const counts = {};
-  FUNNEL_ORDER.forEach(state => {
-    counts[state] = 0;
+  FUNNEL_ORDER.forEach(stage => {
+    const validStates = stageReached[stage] || [stage];
+    counts[stage] = leads.filter(lead => validStates.includes(lead['Estado CRM'])).length;
   });
 
-  // Contar leads por estado
-  leads.forEach(lead => {
-    const state = lead['Estado CRM'];
-    if (state && counts.hasOwnProperty(state)) {
-      counts[state]++;
-    }
-  });
-
-  // Calcular porcentajes acumulativos
-  const total = leads.length || 1;
-  let previousCount = total;
+  // El total es el primer paso del funnel
+  const total = counts[FUNNEL_ORDER[0]] || 1;
 
   return FUNNEL_ORDER.map((state, index) => {
     const count = counts[state];
     const percentOfTotal = (count / total) * 100;
-    const conversionFromPrevious = index > 0 && previousCount > 0
+    const previousCount = index > 0 ? counts[FUNNEL_ORDER[index - 1]] : total;
+    const conversionFromPrevious = previousCount > 0
       ? (count / previousCount) * 100
       : 100;
-
-    previousCount = count || previousCount;
 
     return {
       state,

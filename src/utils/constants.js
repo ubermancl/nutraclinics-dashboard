@@ -26,9 +26,8 @@ export const SCHEDULING_STATES = {
   'Cancelado': { color: 'bg-red-100 text-red-800' },
 };
 
-// Orden del funnel de conversión
+// Orden del funnel de conversión (sin "Nuevo Lead" porque pasan inmediatamente a "En Conversación")
 export const FUNNEL_ORDER = [
-  'Nuevo Lead',
   'En Conversación',
   'Precalificado',
   'Link Enviado',
