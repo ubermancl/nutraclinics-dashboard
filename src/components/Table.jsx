@@ -49,7 +49,7 @@ function LeadDetailModal({ lead, isOpen, onClose }) {
     {
       title: 'Ventas',
       fields: [
-        { label: 'Monto Venta', value: formatCurrency(lead['Monto Venta Cerrada']) },
+        { label: 'Monto Venta', value: formatCurrency(lead['Monto Venta Cerrada (PEN)']) },
         { label: 'Plan Adquirido', value: lead['Plan Adquirido'] },
       ],
     },
@@ -181,7 +181,7 @@ export default function Table({
       lead['Estado CRM'] || '',
       lead['Distrito Usado Para Calificar'] || lead['Distrito Residencia'] || '',
       lead.CreatedAt || '',
-      lead['Monto Venta Cerrada'] || '',
+      lead['Monto Venta Cerrada (PEN)'] || '',
     ]);
 
     const csvContent = [

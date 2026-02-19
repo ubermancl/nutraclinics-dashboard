@@ -1,7 +1,34 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { RefreshCw, LogOut, Wifi, WifiOff, Calendar, X } from 'lucide-react';
 import { Button, Select } from './ui';
 import { formatDateTime } from '../utils/formatters';
+
+const DateInput = ({ value, onChange, placeholder }) => {
+  const inputRef = useRef(null);
+
+  const formatDisplay = (isoDate) => {
+    if (!isoDate) return placeholder || 'DD/MM/AAAA';
+    const [y, m, d] = isoDate.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
+  return (
+    <div
+      className="relative flex items-center gap-1.5 bg-dark-700 border border-dark-600 rounded px-2 py-1.5 cursor-pointer hover:border-dark-500 transition-colors min-w-[120px]"
+      onClick={() => inputRef.current?.showPicker?.()}
+    >
+      <Calendar className="w-3 h-3 text-accent-cyan shrink-0" />
+      <span className="text-sm text-gray-200 select-none">{formatDisplay(value)}</span>
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        onChange={onChange}
+        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+      />
+    </div>
+  );
+};
 
 const DATE_FILTERS = [
   { value: 'today', label: 'Hoy' },
@@ -97,18 +124,16 @@ export default function Header({
             {/* Selector de rango personalizado */}
             {showCustomPicker && (
               <div className="flex items-center gap-2 glass-card p-2">
-                <input
-                  type="date"
+                <DateInput
                   value={tempStartDate}
                   onChange={(e) => setTempStartDate(e.target.value)}
-                  className="bg-dark-700 border border-dark-600 rounded px-2 py-1 text-sm text-gray-100"
+                  placeholder="Desde"
                 />
-                <span className="text-gray-500">a</span>
-                <input
-                  type="date"
+                <span className="text-gray-500 text-sm">→</span>
+                <DateInput
                   value={tempEndDate}
                   onChange={(e) => setTempEndDate(e.target.value)}
-                  className="bg-dark-700 border border-dark-600 rounded px-2 py-1 text-sm text-gray-100"
+                  placeholder="Hasta"
                 />
                 <Button size="sm" onClick={applyCustomRange}>
                   Aplicar

@@ -112,7 +112,7 @@ export const LEAD_FIELDS = {
   requiereRevision: 'Requiere revisión manual',
 
   // Ventas
-  montoVenta: 'Monto Venta Cerrada',
+  montoVenta: 'Monto Venta Cerrada (PEN)',
   planAdquirido: 'Plan Adquirido',
 
   // Seguimiento

@@ -84,6 +84,7 @@ export function calculateMetrics(leads, dateFilter = 'month', customStart = null
     return {
       totalLeads: 0,
       newLeads: 0,
+      inConversacion: 0,
       scheduled: 0,
       conversionRate: 0,
       revenue: 0,
@@ -102,10 +103,11 @@ export function calculateMetrics(leads, dateFilter = 'month', customStart = null
   // Métricas actuales
   const totalLeads = leads.length;
   const newLeads = currentLeads.length;
+  const inConversacion = leads.filter(l => l['Estado CRM'] === 'En Conversación').length;
   const scheduled = currentLeads.filter(l => l['Estado CRM'] === 'Agendado' || l['Fecha de agendamiento']).length;
   const purchased = currentLeads.filter(l => l['Estado CRM'] === 'Compró').length;
   const conversionRate = newLeads > 0 ? purchased / newLeads : 0;
-  const revenue = currentLeads.reduce((sum, l) => sum + (parseFloat(l['Monto Venta Cerrada']) || 0), 0);
+  const revenue = currentLeads.reduce((sum, l) => sum + (parseFloat(l['Monto Venta Cerrada (PEN)']) || 0), 0);
   const requiresAttention = leads.filter(l => l['Estado CRM'] === 'Requiere Humano' || l['Requiere revisión manual']).length;
 
   // Métricas anteriores para comparación
@@ -113,7 +115,7 @@ export function calculateMetrics(leads, dateFilter = 'month', customStart = null
   const prevScheduled = previousLeads.filter(l => l['Estado CRM'] === 'Agendado' || l['Fecha de agendamiento']).length;
   const prevPurchased = previousLeads.filter(l => l['Estado CRM'] === 'Compró').length;
   const prevConversionRate = prevNewLeads > 0 ? prevPurchased / prevNewLeads : 0;
-  const prevRevenue = previousLeads.reduce((sum, l) => sum + (parseFloat(l['Monto Venta Cerrada']) || 0), 0);
+  const prevRevenue = previousLeads.reduce((sum, l) => sum + (parseFloat(l['Monto Venta Cerrada (PEN)']) || 0), 0);
 
   // Calcular cambios
   const changes = {
@@ -126,6 +128,7 @@ export function calculateMetrics(leads, dateFilter = 'month', customStart = null
   return {
     totalLeads,
     newLeads,
+    inConversacion,
     scheduled,
     conversionRate,
     revenue,
@@ -269,8 +272,8 @@ export function calculateAdvancedMetrics(leads) {
   const closeRate = attended > 0 ? purchased / attended : 0;
 
   // Ticket Promedio
-  const salesLeads = leads.filter(l => l['Monto Venta Cerrada'] && parseFloat(l['Monto Venta Cerrada']) > 0);
-  const totalSales = salesLeads.reduce((sum, l) => sum + parseFloat(l['Monto Venta Cerrada']), 0);
+  const salesLeads = leads.filter(l => l['Monto Venta Cerrada (PEN)'] && parseFloat(l['Monto Venta Cerrada (PEN)']) > 0);
+  const totalSales = salesLeads.reduce((sum, l) => sum + parseFloat(l['Monto Venta Cerrada (PEN)']), 0);
   const avgTicket = salesLeads.length > 0 ? totalSales / salesLeads.length : 0;
 
   // Mejor distrito (más conversiones)

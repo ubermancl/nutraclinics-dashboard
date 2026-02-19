@@ -53,14 +53,14 @@ export function useStats(leads, dateFilter = 'month', customStart = null, custom
   const revenueByWeek = useMemo(() => {
     const weeks = {};
     leads.forEach(lead => {
-      if (lead['Monto Venta Cerrada'] && lead['CreatedAt']) {
+      if (lead['Monto Venta Cerrada (PEN)'] && lead['CreatedAt']) {
         try {
           const date = new Date(lead['CreatedAt']);
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - date.getDay());
           const weekKey = weekStart.toISOString().split('T')[0];
 
-          weeks[weekKey] = (weeks[weekKey] || 0) + parseFloat(lead['Monto Venta Cerrada']);
+          weeks[weekKey] = (weeks[weekKey] || 0) + parseFloat(lead['Monto Venta Cerrada (PEN)']);
         } catch { }
       }
     });

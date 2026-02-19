@@ -74,7 +74,7 @@ const MetricCard = ({
 export default function Cards({ metrics }) {
   const {
     totalLeads,
-    newLeads,
+    inConversacion,
     scheduled,
     conversionRate,
     revenue,
@@ -92,8 +92,7 @@ export default function Cards({ metrics }) {
       />
       <MetricCard
         title="En Conversación"
-        value={newLeads}
-        change={changes.newLeads}
+        value={inConversacion}
         icon={MessageCircle}
         accentColor="purple"
       />
