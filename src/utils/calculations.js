@@ -138,63 +138,56 @@ export function calculateMetrics(leads, dateFilter = 'month', customStart = null
 }
 
 /**
- * Calcular datos del funnel (acumulativo - cuenta los que llegaron a cada etapa o la pasaron)
+ * Calcular datos del funnel — snapshot actual del pipeline
+ * Cada etapa muestra cuántos leads están AHORA en ese estado,
+ * no cuántos pasaron históricamente por él.
  */
 export function calculateFunnel(leads) {
   if (!leads || !Array.isArray(leads)) return [];
 
-  // Estados que indican que el lead llegó a cada etapa del funnel
-  const stageReached = {
-    'En Conversación': ['En Conversación', 'Precalificado', 'Descalificado', 'Link Enviado', 'Agendado', 'Asistió', 'No Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró', 'Canceló Cita', 'Requiere Humano'],
-    'Precalificado': ['Precalificado', 'Link Enviado', 'Agendado', 'Asistió', 'No Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró', 'Canceló Cita'],
-    'Link Enviado': ['Link Enviado', 'Agendado', 'Asistió', 'No Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró', 'Canceló Cita'],
-    'Agendado': ['Agendado', 'Asistió', 'No Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró', 'Canceló Cita'],
-    'Asistió': ['Asistió', 'Compró', 'No Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró'],
-    'Compró': ['Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró'],
-  };
-
-  // Contar leads que llegaron a cada etapa
-  const counts = {};
-  FUNNEL_ORDER.forEach(stage => {
-    const validStates = stageReached[stage] || [stage];
-    counts[stage] = leads.filter(lead => validStates.includes(lead['Estado CRM'])).length;
-  });
-
   const totalLeads = leads.length;
 
-  // Etiquetas para indicadores de fuga entre etapas
+  // Estados ACTUALES de cada etapa (dónde está el lead HOY)
+  const stageCurrentStates = {
+    'En Conversación': ['En Conversación', 'Requiere Humano'],
+    'Precalificado':   ['Precalificado'],
+    'Link Enviado':    ['Link Enviado'],
+    'Agendado':        ['Agendado'],
+    'Asistió':         ['Asistió'],
+    'Compró':          ['Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró'],
+  };
+
+  // Salidas negativas del funnel por etapa (leads perdidos en esa transición)
+  const negativeExits = {
+    'En Conversación': leads.filter(l => l['Estado CRM'] === 'Descalificado').length,
+    'Precalificado':   0,
+    'Link Enviado':    0,
+    'Agendado':        leads.filter(l => ['No Asistió', 'Canceló Cita'].includes(l['Estado CRM'])).length,
+    'Asistió':         leads.filter(l => l['Estado CRM'] === 'No Compró').length,
+    'Compró':          0,
+  };
+
   const leakedLabels = {
-    'Total Leads':     'sin conversación',
-    'En Conversación': 'sin calificar',
-    'Precalificado':   'sin link enviado',
-    'Link Enviado':    'sin agendar',
-    'Agendado':        'no asistieron',
+    'En Conversación': 'descalificados',
+    'Agendado':        'no asistieron o cancelaron',
     'Asistió':         'no compraron',
   };
 
-  const funnelSteps = FUNNEL_ORDER.map((state, index) => {
-    const count = counts[state];
+  const funnelSteps = FUNNEL_ORDER.map((state) => {
+    const states = stageCurrentStates[state] || [state];
+    const count = leads.filter(lead => states.includes(lead['Estado CRM'])).length;
     const percentOfTotal = totalLeads > 0 ? (count / totalLeads) * 100 : 0;
-    const previousCount = index > 0 ? counts[FUNNEL_ORDER[index - 1]] : totalLeads;
-    const conversionFromPrevious = previousCount > 0
-      ? (count / previousCount) * 100
-      : 100;
-
-    // Cuántos no avanzaron a la siguiente etapa
-    const nextCount = index < FUNNEL_ORDER.length - 1 ? counts[FUNNEL_ORDER[index + 1]] : count;
-    const leaked = Math.max(0, count - nextCount);
+    const leaked = negativeExits[state] || 0;
 
     return {
       state,
       count,
       percentOfTotal,
-      conversionFromPrevious,
+      conversionFromPrevious: percentOfTotal, // % sobre el total de leads
       leaked,
-      leakedLabel: leakedLabels[state] || '',
+      leakedLabel: leaked > 0 ? (leakedLabels[state] || '') : '',
     };
   });
-
-  const totalLeaked = Math.max(0, totalLeads - (counts[FUNNEL_ORDER[0]] || 0));
 
   return [
     {
@@ -202,8 +195,8 @@ export function calculateFunnel(leads) {
       count: totalLeads,
       percentOfTotal: 100,
       conversionFromPrevious: 100,
-      leaked: totalLeaked,
-      leakedLabel: leakedLabels['Total Leads'],
+      leaked: 0,
+      leakedLabel: '',
     },
     ...funnelSteps,
   ];

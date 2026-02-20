@@ -44,15 +44,14 @@ const CustomTooltip = ({ active, payload, label, formatter }) => {
   return null;
 };
 
-// Descripciones para tooltips del funnel
+// Descripciones para tooltips del funnel (snapshot actual, no acumulativo)
 const FUNNEL_DESCRIPTIONS = {
-  'Total Leads': 'Base del funnel — 100% de referencia. Todos los leads recibidos en el CRM sin importar su estado actual.',
-  'En Conversación': '% del total de leads que inició conversación activa. Es acumulativo: un lead "Precalificado", "Agendado" o "Compró" también cuenta aquí porque pasó por esta etapa.',
-  'Precalificado': '% de los que estuvieron En Conversación que respondieron y superaron la calificación inicial. Acumulativo: incluye los que avanzaron más (Link Enviado, Agendado, Compró...).',
-  'Link Enviado': '% de los Precalificados que recibieron el link de agendamiento. Acumulativo: incluye quienes ya agendaron o compraron.',
-  'Agendado': '% de los que recibieron link que efectivamente agendaron su cita. Acumulativo: incluye quienes asistieron y compraron.',
-  'Asistió': '% de los Agendados que asistieron a la consulta. Acumulativo: incluye también quienes compraron en esa visita.',
-  'Compró': '% de los que Asistieron que adquirieron un plan. Esta es tu tasa de cierre real.',
+  'En Conversación': '% del total de leads que están AHORA en conversación activa (estado "En Conversación" o "Requiere Humano"). Los que ya avanzaron a Precalificado, Agendado, etc. NO se cuentan aquí.',
+  'Precalificado':   '% del total de leads que están AHORA esperando recibir el link de agendamiento. Pasaron la calificación inicial pero aún no se les envió el link.',
+  'Link Enviado':    '% del total de leads que recibieron el link y están AHORA pendientes de agendar su cita. Aún no han confirmado fecha.',
+  'Agendado':        '% del total de leads que tienen una cita programada actualmente. Están en agenda esperando su consulta.',
+  'Asistió':         '% del total de leads que asistieron a la consulta y están AHORA pendientes de decisión de compra. Generalmente este número es bajo porque pasan rápido a Compró o No Compró.',
+  'Compró':          '% del total de leads que han convertido exitosamente. Incluye: Compró, Cliente Activo, Plan Terminado y Recompró.',
 };
 
 // Funnel de conversión
