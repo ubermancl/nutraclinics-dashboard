@@ -136,8 +136,8 @@ export default function Header({
           const pdfFooter = clonedDoc.querySelector('.footer-pdf');
           if (screenFooter) screenFooter.style.display = 'none';
           if (pdfFooter) pdfFooter.style.display = 'block';
-          // Eliminar truncate de valores numéricos para evitar cortes
-          clonedDoc.querySelectorAll('.font-mono').forEach(el => {
+          // Eliminar truncate de todos los elementos para evitar cortes de texto
+          clonedDoc.querySelectorAll('.truncate').forEach(el => {
             el.classList.remove('truncate');
             el.style.overflow = 'visible';
             el.style.whiteSpace = 'normal';
