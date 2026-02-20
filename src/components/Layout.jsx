@@ -4,11 +4,11 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-dark-900">
       {/* Background gradients */}
-      <div className="fixed inset-0 bg-gradient-radial from-accent-cyan/5 via-transparent to-transparent opacity-50" />
-      <div className="fixed inset-0 bg-gradient-radial from-accent-magenta/5 via-transparent to-transparent translate-x-1/2 opacity-50" />
+      <div className="fixed inset-0 bg-gradient-radial from-accent-cyan/5 via-transparent to-transparent opacity-50 no-print" />
+      <div className="fixed inset-0 bg-gradient-radial from-accent-magenta/5 via-transparent to-transparent translate-x-1/2 opacity-50 no-print" />
 
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10" id="dashboard-print-root">
         {children}
       </div>
 

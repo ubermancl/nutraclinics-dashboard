@@ -1,16 +1,21 @@
 import { useState, useRef } from 'react';
-import { RefreshCw, LogOut, Wifi, WifiOff, Calendar, X, Lock, FileDown } from 'lucide-react';
+import { RefreshCw, LogOut, Wifi, WifiOff, Calendar, X, Lock, FileDown, Loader2 } from 'lucide-react';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Button, Select } from './ui';
-import { formatDateTime, formatDate } from '../utils/formatters';
+import { formatDateTime } from '../utils/formatters';
 import { CLIENT_CONFIG } from '../config/client';
 
 const UPGRADE_URL = 'https://wa.link/su2ie7';
 
-const PERIOD_LABELS = {
-  today: 'Hoy',
-  week: 'Esta semana',
-  month: 'Este mes',
-};
+const DATE_FILTERS = [
+  { value: 'today',  label: 'Hoy' },
+  { value: 'week',   label: 'Esta Semana' },
+  { value: 'last7',  label: 'Últimos 7 días' },
+  { value: 'month',  label: 'Este Mes' },
+  { value: 'last30', label: 'Últimos 30 días' },
+  { value: 'custom', label: 'Personalizado' },
+];
 
 const DateInput = ({ value, onChange, placeholder }) => {
   const inputRef = useRef(null);
@@ -39,13 +44,6 @@ const DateInput = ({ value, onChange, placeholder }) => {
   );
 };
 
-const DATE_FILTERS = [
-  { value: 'today', label: 'Hoy' },
-  { value: 'week', label: 'Esta Semana' },
-  { value: 'month', label: 'Este Mes' },
-  { value: 'custom', label: 'Personalizado' },
-];
-
 export default function Header({
   dateFilter,
   onDateFilterChange,
@@ -60,6 +58,7 @@ export default function Header({
   const [showCustomPicker, setShowCustomPicker] = useState(false);
   const [tempStartDate, setTempStartDate] = useState('');
   const [tempEndDate, setTempEndDate] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleDateFilterChange = (value) => {
     if (value === 'custom') {
@@ -81,9 +80,89 @@ export default function Header({
     }
   };
 
-  const periodLabel = dateFilter === 'custom' && customDateRange.start && customDateRange.end
-    ? `${formatDate(customDateRange.start)} → ${formatDate(customDateRange.end)}`
-    : (PERIOD_LABELS[dateFilter] || 'Este mes');
+  const getPeriodLabel = () => {
+    const now = new Date();
+    const fmt = (d) => format(d, 'd MMM', { locale: es });
+    switch (dateFilter) {
+      case 'today':
+        return format(now, "d MMM yyyy", { locale: es });
+      case 'week': {
+        const s = startOfWeek(now, { weekStartsOn: 1 });
+        const e = endOfWeek(now, { weekStartsOn: 1 });
+        return `${fmt(s)} → ${fmt(e)}`;
+      }
+      case 'last7':
+        return `${fmt(subDays(now, 6))} → ${fmt(now)}`;
+      case 'month': {
+        const s = startOfMonth(now);
+        const e = endOfMonth(now);
+        return `${fmt(s)} → ${fmt(e)}`;
+      }
+      case 'last30':
+        return `${fmt(subDays(now, 29))} → ${fmt(now)}`;
+      case 'custom':
+        if (customDateRange.start && customDateRange.end) {
+          return `${fmt(new Date(customDateRange.start))} → ${fmt(new Date(customDateRange.end))}`;
+        }
+        return 'Personalizado';
+      default:
+        return 'Este mes';
+    }
+  };
+
+  const exportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById('dashboard-print-root');
+      if (!element) return;
+
+      const [html2canvasModule, jspdfModule] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
+      const html2canvas = html2canvasModule.default;
+      const { jsPDF } = jspdfModule;
+
+      const canvas = await html2canvas(element, {
+        scale: 1.5,
+        backgroundColor: '#0D1117',
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        ignoreElements: (el) =>
+          el.classList.contains('no-print') ||
+          el.classList.contains('fixed'),
+      });
+
+      const pageW = 297; // A4 landscape mm
+      const pageH = 210;
+      const imgW = pageW;
+      const imgH = (canvas.height / canvas.width) * imgW;
+
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.88);
+
+      let yOffset = 0;
+      let remaining = imgH;
+      let page = 0;
+
+      while (remaining > 0) {
+        if (page > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, -yOffset, imgW, imgH);
+        yOffset += pageH;
+        remaining -= pageH;
+        page++;
+      }
+
+      const dateStr = format(new Date(), 'dd-MM-yyyy');
+      const name = CLIENT_CONFIG.name.toLowerCase().replace(/\s+/g, '-');
+      pdf.save(`dashboard-${name}-${dateStr}.pdf`);
+    } catch (err) {
+      console.error('Error al exportar PDF:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <header className="bg-dark-800/80 backdrop-blur-md border-b border-dark-700 sticky top-0 z-40">
@@ -104,7 +183,7 @@ export default function Header({
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-100">{CLIENT_CONFIG.name}</h1>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
+              <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
                 {isOnline ? (
                   <span className="flex items-center gap-1 text-accent-green">
                     <Wifi className="w-3 h-3" />
@@ -117,11 +196,11 @@ export default function Header({
                   </span>
                 )}
                 <span className="text-dark-500">•</span>
-                <span className="text-xs text-gray-500">{periodLabel}</span>
+                <span className="text-gray-500">{getPeriodLabel()}</span>
                 {lastUpdated && (
                   <>
                     <span className="text-dark-500 hidden sm:inline">•</span>
-                    <span className="hidden sm:inline text-xs">{formatDateTime(lastUpdated)}</span>
+                    <span className="hidden sm:inline">{formatDateTime(lastUpdated)}</span>
                   </>
                 )}
               </div>
@@ -148,7 +227,7 @@ export default function Header({
                 value={dateFilter}
                 onChange={(e) => handleDateFilterChange(e.target.value)}
                 options={DATE_FILTERS}
-                className="w-40"
+                className="w-44"
               />
             </div>
 
@@ -181,11 +260,15 @@ export default function Header({
             {/* Exportar PDF */}
             <Button
               variant="secondary"
-              onClick={() => window.print()}
-              title="Exportar como PDF"
+              onClick={exportPDF}
+              disabled={isExporting}
+              title="Exportar dashboard como PDF"
             >
-              <FileDown className="w-4 h-4" />
-              <span className="hidden sm:inline">PDF</span>
+              {isExporting
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <FileDown className="w-4 h-4" />
+              }
+              <span className="hidden sm:inline">{isExporting ? 'Exportando...' : 'PDF'}</span>
             </Button>
 
             {/* Actualizar */}
