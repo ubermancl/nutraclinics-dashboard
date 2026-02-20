@@ -70,9 +70,9 @@ export default function Insights({ insights }) {
           {lockedInsights.map((insight, index) => (
             <div
               key={index}
-              className="relative p-4 rounded-lg border border-dark-600 bg-dark-700/30 overflow-hidden"
+              className="relative p-4 rounded-lg border border-dark-600 bg-dark-700/30 overflow-hidden no-print"
             >
-              <div className="blurred-content">
+              <div className="blurred-content no-print">
                 <div className="flex items-start gap-3">
                   <span className="text-xl">{insight.icon}</span>
                   <p className="text-sm text-gray-400">{insight.message}</p>

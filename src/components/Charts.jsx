@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { Lock, MessageCircle } from 'lucide-react';
+import { Lock, MessageCircle, ChevronDown, TrendingUp } from 'lucide-react';
 import { Card } from './ui';
 import { formatNumber, formatCurrency } from '../utils/formatters';
 
@@ -326,35 +326,62 @@ export default function Charts({
   originDistribution,
 }) {
   const [activeTab, setActiveTab] = useState('conversion');
+  const [expanded, setExpanded] = useState(true);
+  const activeTabLabel = tabs.find(t => t.id === activeTab)?.label || 'Gráfico';
 
   return (
     <Card>
-      {/* Tabs */}
-      <div className="flex border-b border-dark-600 mb-6 -mx-4 md:-mx-6 px-4 md:px-6 overflow-x-auto">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`
-              flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-all whitespace-nowrap
-              ${activeTab === tab.id
-                ? tab.locked
-                  ? 'border-accent-magenta text-accent-magenta'
-                  : 'border-accent-cyan text-accent-cyan'
-                : 'border-transparent text-gray-400 hover:text-gray-200'
-              }
-            `}
-          >
-            {tab.label}
-            {tab.locked && <Lock className="w-3 h-3 opacity-60" />}
-          </button>
-        ))}
+      {/* Encabezado de sección con título y botón contraer */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-accent-cyan/10">
+            <TrendingUp className="w-5 h-5 text-accent-cyan" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-100">Embudo de Ventas</h3>
+          {!expanded && (
+            <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-dark-700 text-gray-500 rounded-full">
+              {activeTabLabel}
+              {activeTab === 'pipeline' && <Lock className="w-2.5 h-2.5 text-accent-magenta/60" />}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="p-1.5 rounded-lg hover:bg-dark-600 transition-colors text-gray-400 hover:text-gray-200"
+          title={expanded ? 'Contraer' : 'Expandir'}
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expanded ? '' : '-rotate-90'}`} />
+        </button>
       </div>
 
-      {activeTab === 'conversion' && <ConversionFunnel data={funnelData} />}
-      {activeTab === 'pipeline' && (
+      {expanded && (
+        <>
+          {/* Tabs */}
+          <div className="flex border-b border-dark-600 mb-6 -mx-4 md:-mx-6 px-4 md:px-6 overflow-x-auto">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-all whitespace-nowrap
+                  ${activeTab === tab.id
+                    ? tab.locked
+                      ? 'border-accent-magenta text-accent-magenta'
+                      : 'border-accent-cyan text-accent-cyan'
+                    : 'border-transparent text-gray-400 hover:text-gray-200'
+                  }
+                `}
+              >
+                {tab.label}
+                {tab.locked && <Lock className="w-3 h-3 opacity-60" />}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'conversion' && <ConversionFunnel data={funnelData} />}
+          {activeTab === 'pipeline' && (
         <div className="relative">
-          <div className="blur-sm pointer-events-none select-none opacity-50">
+          <div className="blur-sm pointer-events-none select-none opacity-50 no-print">
             <PipelineView data={pipelineData} />
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -379,13 +406,15 @@ export default function Charts({
           </div>
         </div>
       )}
-      {activeTab === 'trends'     && <TrendsCharts leadsByDay={leadsByDay} revenueByWeek={revenueByWeek} />}
-      {activeTab === 'distribution' && (
-        <DistributionCharts
-          statusDistribution={statusDistribution}
-          districtDistribution={districtDistribution}
-          originDistribution={originDistribution}
-        />
+          {activeTab === 'trends' && <TrendsCharts leadsByDay={leadsByDay} revenueByWeek={revenueByWeek} />}
+          {activeTab === 'distribution' && (
+            <DistributionCharts
+              statusDistribution={statusDistribution}
+              districtDistribution={districtDistribution}
+              originDistribution={originDistribution}
+            />
+          )}
+        </>
       )}
     </Card>
   );

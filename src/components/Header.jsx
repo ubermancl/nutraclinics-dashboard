@@ -129,7 +129,20 @@ export default function Header({
         logging: false,
         useCORS: true,
         allowTaint: true,
-        windowWidth: 1440,
+        windowWidth: 1920,
+        onclone: (clonedDoc) => {
+          // Activar versión PDF del footer
+          const screenFooter = clonedDoc.querySelector('.footer-screen');
+          const pdfFooter = clonedDoc.querySelector('.footer-pdf');
+          if (screenFooter) screenFooter.style.display = 'none';
+          if (pdfFooter) pdfFooter.style.display = 'block';
+          // Eliminar truncate de valores numéricos para evitar cortes
+          clonedDoc.querySelectorAll('.font-mono').forEach(el => {
+            el.classList.remove('truncate');
+            el.style.overflow = 'visible';
+            el.style.whiteSpace = 'normal';
+          });
+        },
         ignoreElements: (el) =>
           el.classList.contains('no-print') ||
           el.classList.contains('fixed'),
