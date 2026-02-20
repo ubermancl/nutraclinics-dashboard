@@ -162,6 +162,16 @@ export function calculateFunnel(leads) {
 
   const totalLeads = leads.length;
 
+  // Etiquetas para indicadores de fuga entre etapas
+  const leakedLabels = {
+    'Total Leads':     'sin conversación',
+    'En Conversación': 'sin calificar',
+    'Precalificado':   'sin link enviado',
+    'Link Enviado':    'sin agendar',
+    'Agendado':        'no asistieron',
+    'Asistió':         'no compraron',
+  };
+
   const funnelSteps = FUNNEL_ORDER.map((state, index) => {
     const count = counts[state];
     const percentOfTotal = totalLeads > 0 ? (count / totalLeads) * 100 : 0;
@@ -170,16 +180,31 @@ export function calculateFunnel(leads) {
       ? (count / previousCount) * 100
       : 100;
 
+    // Cuántos no avanzaron a la siguiente etapa
+    const nextCount = index < FUNNEL_ORDER.length - 1 ? counts[FUNNEL_ORDER[index + 1]] : count;
+    const leaked = Math.max(0, count - nextCount);
+
     return {
       state,
       count,
       percentOfTotal,
-      conversionFromPrevious
+      conversionFromPrevious,
+      leaked,
+      leakedLabel: leakedLabels[state] || '',
     };
   });
 
+  const totalLeaked = Math.max(0, totalLeads - (counts[FUNNEL_ORDER[0]] || 0));
+
   return [
-    { state: 'Total Leads', count: totalLeads, percentOfTotal: 100, conversionFromPrevious: 100 },
+    {
+      state: 'Total Leads',
+      count: totalLeads,
+      percentOfTotal: 100,
+      conversionFromPrevious: 100,
+      leaked: totalLeaked,
+      leakedLabel: leakedLabels['Total Leads'],
+    },
     ...funnelSteps,
   ];
 }
@@ -417,59 +442,109 @@ export function generateAlerts(leads) {
 }
 
 /**
- * Generar insights
+ * Generar insights priorizados con datos reales del CRM
+ * Orden: urgente > dinero en riesgo > acciones pendientes > patrones
  */
 export function generateInsights(leads, metrics) {
   if (!leads || !Array.isArray(leads)) return [];
 
   const insights = [];
 
-  // Leads en Precalificado esperando link
-  const precalifiedWaiting = leads.filter(l => l['Estado CRM'] === 'Precalificado').length;
-  if (precalifiedWaiting > 0) {
+  // --- PRIORIDAD 1: URGENTE (respuesta inmediata requerida) ---
+  const requiresHuman = leads.filter(l => l['Estado CRM'] === 'Requiere Humano').length;
+  if (requiresHuman > 0) {
     insights.push({
-      icon: '💡',
-      message: `${precalifiedWaiting} lead${precalifiedWaiting > 1 ? 's' : ''} en Precalificado esperan link - Revisar`,
-      type: 'action'
+      icon: '🔴',
+      message: `${requiresHuman} lead${requiresHuman > 1 ? 's requieren' : ' requiere'} atención humana ahora — cada hora sin respuesta reduce ~40% la probabilidad de cierre.`,
+      type: 'warning',
+      priority: 1,
     });
   }
 
-  // Leads sin agendar después de 48h
-  const linkSentLong = leads.filter(l => l['Estado CRM'] === 'Link Enviado').length;
-  if (linkSentLong > 3) {
+  // --- PRIORIDAD 2: DINERO EN RIESGO ---
+  const noBuy = leads.filter(l => l['Estado CRM'] === 'No Compró').length;
+  if (noBuy > 0) {
+    const potential = metrics?.avgTicket > 0
+      ? `= S/${Math.round(noBuy * metrics.avgTicket).toLocaleString()} en ingresos potenciales`
+      : `= ${noBuy} oportunidades sin cerrar`;
+    insights.push({
+      icon: '💰',
+      message: `${noBuy} leads en "No Compró" ${potential}. El 20-30% puede reactivarse con un seguimiento diferente — ¿cuándo fue el último contacto?`,
+      type: 'action',
+      priority: 2,
+    });
+  }
+
+  // --- PRIORIDAD 3: MÉTRICAS CRÍTICAS ---
+  if (metrics?.noShowRate > 0.2) {
+    const pct = (metrics.noShowRate * 100).toFixed(0);
+    insights.push({
+      icon: '⚠️',
+      message: `No-show en ${pct}% (umbral crítico: 20%). Un recordatorio por WhatsApp 2h antes de la cita puede reducirlo a la mitad sin costo adicional.`,
+      type: 'warning',
+      priority: 3,
+    });
+  }
+
+  // --- PRIORIDAD 4: ACCIONES PENDIENTES CON LEADS CALIENTES ---
+  const linkSent = leads.filter(l => l['Estado CRM'] === 'Link Enviado').length;
+  if (linkSent > 0) {
     insights.push({
       icon: '📅',
-      message: `${linkSentLong} leads no agendaron después de recibir link - Hacer seguimiento`,
-      type: 'action'
+      message: `${linkSent} lead${linkSent !== 1 ? 's tienen' : ' tiene'} el link sin usar — un mensaje personalizado en las próximas 24h puede recuperar el 30-40% de ellos.`,
+      type: 'action',
+      priority: 4,
     });
   }
 
-  // Mejor distrito
-  if (metrics?.bestDistrict) {
+  const precalified = leads.filter(l => l['Estado CRM'] === 'Precalificado').length;
+  if (precalified > 0) {
     insights.push({
-      icon: '🔥',
-      message: `${metrics.bestDistrict} tiene la mejor tasa de conversión`,
-      type: 'insight'
+      icon: '💡',
+      message: `${precalified} lead${precalified !== 1 ? 's están' : ' está'} precalificado${precalified !== 1 ? 's' : ''} y esperan el link — están listos y el momentum se enfría con cada hora.`,
+      type: 'action',
+      priority: 5,
     });
   }
 
-  // Mejor día
+  // --- PRIORIDAD 5: PERFORMANCE (tasa de cierre) ---
+  if (metrics?.closeRate > 0) {
+    const pct = (metrics.closeRate * 100).toFixed(0);
+    if (metrics.closeRate >= 0.5) {
+      insights.push({
+        icon: '🏆',
+        message: `Tasa de cierre en ${pct}% — por encima del promedio (30-40%). El cuello de botella no está en la consulta sino en traer más leads calificados a ella.`,
+        type: 'insight',
+        priority: 6,
+      });
+    } else if (metrics.closeRate < 0.3) {
+      insights.push({
+        icon: '⚡',
+        message: `Tasa de cierre en ${pct}% — por debajo del estándar (30-40%). Los leads que asisten tienen objeciones sin resolver; revisar el script de consulta puede subir esto 10-15%.`,
+        type: 'warning',
+        priority: 6,
+      });
+    }
+  }
+
+  // --- PRIORIDAD 6: PATRONES (optimización) ---
   if (metrics?.bestDay) {
     insights.push({
       icon: '📈',
-      message: `Los ${metrics.bestDay.toLowerCase()} recibes más leads - Considera aumentar presupuesto de ads`,
-      type: 'insight'
+      message: `Los ${metrics.bestDay.toLowerCase()} recibes más leads — concentrar el presupuesto de ads ese día reduce el CPL y mejora la velocidad de primera respuesta.`,
+      type: 'insight',
+      priority: 7,
     });
   }
 
-  // Alerta de no-show alto
-  if (metrics?.noShowRate > 0.2) {
+  if (metrics?.bestDistrict && metrics.bestDistrict !== 'Desconocido') {
     insights.push({
-      icon: '⚠️',
-      message: `Tasa de no-show es ${(metrics.noShowRate * 100).toFixed(1)}% - Considera recordatorio extra`,
-      type: 'warning'
+      icon: '🔥',
+      message: `Leads de ${metrics.bestDistrict} convierten más que cualquier otro distrito — segmentar campañas hacia esa zona mejora el ROI publicitario.`,
+      type: 'insight',
+      priority: 8,
     });
   }
 
-  return insights;
+  return insights.sort((a, b) => (a.priority || 99) - (b.priority || 99));
 }

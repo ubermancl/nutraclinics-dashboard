@@ -8,10 +8,10 @@ const insightStyles = {
   warning: 'border-warning/30 bg-warning/5',
 };
 
-// Insights premium que siempre aparecen bloqueados
+// Insights premium de relleno (cuando no hay suficientes insights dinámicos)
 const PREMIUM_INSIGHTS = [
-  { icon: '🎯', message: 'Canal con mayor ROI este mes y recomendación de presupuesto' },
-  { icon: '⏱️', message: 'Ventana de tiempo óptima para contactar nuevos leads y aumentar respuesta' },
+  { icon: '🎯', message: 'Canal con mayor ROI este mes — recomendación de redistribución de presupuesto' },
+  { icon: '⏱️', message: 'Ventana horaria óptima para contactar leads nuevos y maximizar tasa de respuesta' },
   { icon: '🔄', message: 'Segmento con mayor probabilidad de recompra en los próximos 30 días' },
   { icon: '📊', message: 'Predicción de leads para la próxima semana basada en tendencias históricas' },
 ];
@@ -23,14 +23,11 @@ export default function Insights({ insights }) {
     return null;
   }
 
-  // 2 insights visibles + hasta 3 bloqueados (dinámicos + premium estáticos)
-  const visibleInsights = insights.slice(0, 2);
-  const dynamicLocked = insights.slice(2, 3);
-  const premiumSlots = PREMIUM_INSIGHTS.slice(0, 3 - dynamicLocked.length);
-  const lockedInsights = [
-    ...dynamicLocked.map(i => ({ ...i })),
-    ...premiumSlots.map(i => ({ ...i })),
-  ];
+  // 1 insight visible (el más urgente/prioritario) + 4 bloqueados con datos reales
+  const visibleInsight = insights[0];
+  const dynamicLocked = insights.slice(1, 5);
+  const premiumPad = PREMIUM_INSIGHTS.slice(0, Math.max(0, 4 - dynamicLocked.length));
+  const lockedInsights = [...dynamicLocked, ...premiumPad];
 
   return (
     <Card>
@@ -55,18 +52,15 @@ export default function Insights({ insights }) {
       {/* Grid colapsable */}
       {expanded && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-          {/* 2 insights visibles */}
-          {visibleInsights.map((insight, index) => (
-            <div
-              key={index}
-              className={`p-4 rounded-lg border ${insightStyles[insight.type] || 'border-dark-600 bg-dark-700/50'}`}
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-xl">{insight.icon}</span>
-                <p className="text-sm text-gray-200">{insight.message}</p>
-              </div>
+          {/* 1 insight visible — el más urgente */}
+          <div
+            className={`p-4 rounded-lg border ${insightStyles[visibleInsight.type] || 'border-dark-600 bg-dark-700/50'}`}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-xl">{visibleInsight.icon}</span>
+              <p className="text-sm text-gray-200">{visibleInsight.message}</p>
             </div>
-          ))}
+          </div>
 
           {/* 3 insights bloqueados */}
           {lockedInsights.map((insight, index) => (

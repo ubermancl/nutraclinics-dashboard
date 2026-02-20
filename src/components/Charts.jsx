@@ -116,6 +116,15 @@ function ConversionFunnel({ data }) {
                     }}
                   />
                 </div>
+                {/* Indicador de fuga entre esta etapa y la siguiente */}
+                {item.leaked > 0 && item.leakedLabel && (
+                  <div className="flex items-center gap-1.5 mt-1 pl-1">
+                    <span className="text-accent-red/50 text-[10px]">↳</span>
+                    <span className="text-xs text-dark-400">
+                      {item.leaked} {item.leakedLabel}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           );
