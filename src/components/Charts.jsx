@@ -58,45 +58,51 @@ const FUNNEL_DESCRIPTIONS = {
 // Funnel de conversión
 function ConversionFunnel({ data }) {
   const [hoveredState, setHoveredState] = useState(null);
-  const maxCount = data[0]?.count || 1;
+
+  // Total Leads = referencia (header), el resto son las barras
+  const totalItem = data.find(d => d.state === 'Total Leads');
+  const funnelItems = data.filter(d => d.state !== 'Total Leads');
+  const totalCount = totalItem?.count || 1;
 
   return (
     <div>
+      {/* Total Leads como referencia numérica — no como barra */}
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-dark-600">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-100">Total Leads</span>
+          <span className="text-xs text-gray-600">base 100%</span>
+        </div>
+        <span className="font-mono text-xl font-bold text-accent-cyan">
+          {formatNumber(totalCount)}
+        </span>
+      </div>
+
       <p className="text-xs text-gray-500 mb-4">
         El % de cada etapa es respecto al paso anterior.{' '}
         <span className="text-accent-cyan">Pasa el cursor sobre el % para ver la explicación.</span>
       </p>
+
+      {/* Barras del funnel — anchos relativos al total */}
       <div className="space-y-3">
-        {data.map((item, index) => {
-          const widthPercent = (item.count / maxCount) * 100;
-          const color = CHART_COLORS[index % CHART_COLORS.length];
-          const isTotal = item.state === 'Total Leads';
+        {funnelItems.map((item, index) => {
+          const widthPercent = (item.count / totalCount) * 100;
+          const color = CHART_COLORS[(index + 1) % CHART_COLORS.length];
           const description = FUNNEL_DESCRIPTIONS[item.state];
 
           return (
             <div key={item.state}>
-              {index === 1 && (
-                <div className="border-t border-dark-600 border-dashed my-3" />
-              )}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
-                  <span className={`font-medium ${isTotal ? 'text-gray-100' : 'text-gray-300'}`}>
-                    {item.state}
-                  </span>
+                  <span className="text-gray-300 font-medium">{item.state}</span>
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-gray-100">{formatNumber(item.count)}</span>
-                    {/* Badge de porcentaje con tooltip */}
                     <div
                       className="relative"
                       onMouseEnter={() => setHoveredState(item.state)}
                       onMouseLeave={() => setHoveredState(null)}
                     >
-                      <span className={`text-xs px-2 py-0.5 rounded cursor-help select-none transition-colors ${
-                        isTotal
-                          ? 'bg-accent-cyan/20 text-accent-cyan font-semibold'
-                          : 'bg-dark-600 text-gray-400 hover:bg-dark-500 hover:text-gray-200'
-                      }`}>
-                        {isTotal ? '100%' : `${item.conversionFromPrevious.toFixed(1)}%`}
+                      <span className="text-xs px-2 py-0.5 rounded bg-dark-600 text-gray-400 hover:bg-dark-500 hover:text-gray-200 cursor-help select-none transition-colors">
+                        {item.conversionFromPrevious.toFixed(1)}%
                       </span>
                       {hoveredState === item.state && description && (
                         <div className="absolute right-0 bottom-full mb-2 z-20 w-72 p-3 rounded-lg bg-dark-900 border border-dark-500 shadow-xl text-xs text-gray-300 leading-relaxed pointer-events-none">
@@ -116,7 +122,6 @@ function ConversionFunnel({ data }) {
                     }}
                   />
                 </div>
-                {/* Indicador de fuga entre esta etapa y la siguiente */}
                 {item.leaked > 0 && item.leakedLabel && (
                   <div className="flex items-center gap-1.5 mt-1 pl-1">
                     <span className="text-accent-red/50 text-[10px]">↳</span>
