@@ -129,6 +129,7 @@ export default function Header({
         logging: false,
         useCORS: true,
         allowTaint: true,
+        windowWidth: 1440,
         ignoreElements: (el) =>
           el.classList.contains('no-print') ||
           el.classList.contains('fixed'),

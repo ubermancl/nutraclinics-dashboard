@@ -85,8 +85,11 @@ function FunnelBar({ item, index, totalCount, colorOffset = 0, badgeValue, badge
       </div>
       {item.leaked > 0 && item.leakedLabel && (
         <div className="flex items-center gap-1.5 mt-1 pl-1">
-          <span className="text-accent-red/50 text-[10px]">↳</span>
-          <span className="text-xs text-dark-400">{item.leaked} {item.leakedLabel}</span>
+          <span className="text-accent-red/60 text-[10px]">↳</span>
+          <span className="text-xs text-gray-500">
+            <span className="text-accent-red/70 font-mono">{item.leaked}</span>
+            {' '}{item.leakedLabel}
+          </span>
         </div>
       )}
     </div>

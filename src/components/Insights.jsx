@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Lock, Mail, ChevronDown } from 'lucide-react';
+import { Sparkles, Lock, MessageCircle, ChevronDown } from 'lucide-react';
 import { Card } from './ui';
 
 const insightStyles = {
@@ -96,11 +96,13 @@ export default function Insights({ insights }) {
           {' '}— análisis avanzados con IA para optimizar tus ventas
         </p>
         <a
-          href="mailto:contacto@innovarketing.com"
+          href="https://wa.link/su2ie7"
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-accent-magenta/20 text-accent-magenta hover:bg-accent-magenta/30 transition-colors whitespace-nowrap shrink-0"
         >
-          <Mail className="w-3 h-3" />
-          contacto@innovarketing.com
+          <MessageCircle className="w-3 h-3" />
+          Solicitar acceso PRO
         </a>
       </div>
     </Card>
