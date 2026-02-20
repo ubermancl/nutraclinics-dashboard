@@ -5,13 +5,16 @@ import {
   PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { Lock, MessageCircle } from 'lucide-react';
 import { Card } from './ui';
 import { formatNumber, formatCurrency } from '../utils/formatters';
 
+const UPGRADE_URL = 'https://wa.link/su2ie7';
+
 const tabs = [
-  { id: 'conversion', label: 'Conversión' },
-  { id: 'pipeline',   label: 'Pipeline activo' },
-  { id: 'trends',     label: 'Tendencias' },
+  { id: 'conversion',   label: 'Conversión' },
+  { id: 'pipeline',     label: 'Pipeline activo', locked: true },
+  { id: 'trends',       label: 'Tendencias' },
   { id: 'distribution', label: 'Distribución' },
 ];
 
@@ -330,20 +333,49 @@ export default function Charts({
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`
-              px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-all whitespace-nowrap
+              flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-all whitespace-nowrap
               ${activeTab === tab.id
-                ? 'border-accent-cyan text-accent-cyan'
+                ? tab.locked
+                  ? 'border-accent-magenta text-accent-magenta'
+                  : 'border-accent-cyan text-accent-cyan'
                 : 'border-transparent text-gray-400 hover:text-gray-200'
               }
             `}
           >
             {tab.label}
+            {tab.locked && <Lock className="w-3 h-3 opacity-60" />}
           </button>
         ))}
       </div>
 
       {activeTab === 'conversion' && <ConversionFunnel data={funnelData} />}
-      {activeTab === 'pipeline'   && <PipelineView data={pipelineData} />}
+      {activeTab === 'pipeline' && (
+        <div className="relative">
+          <div className="blur-sm pointer-events-none select-none opacity-50">
+            <PipelineView data={pipelineData} />
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center p-6 rounded-xl bg-dark-800/95 border border-accent-magenta/30 shadow-2xl max-w-sm mx-auto">
+              <div className="w-12 h-12 rounded-full bg-accent-magenta/10 flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-6 h-6 text-accent-magenta" />
+              </div>
+              <h4 className="text-base font-semibold text-gray-100 mb-2">Pipeline Activo — PRO</h4>
+              <p className="text-sm text-gray-400 mb-5">
+                Ve exactamente dónde está cada lead ahora mismo y qué acción tomar para cerrar más ventas hoy.
+              </p>
+              <a
+                href={UPGRADE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent-magenta text-white text-sm font-semibold hover:bg-accent-magenta/80 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Solicitar acceso PRO
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
       {activeTab === 'trends'     && <TrendsCharts leadsByDay={leadsByDay} revenueByWeek={revenueByWeek} />}
       {activeTab === 'distribution' && (
         <DistributionCharts

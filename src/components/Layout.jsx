@@ -12,6 +12,30 @@ export default function Layout({ children }) {
         {children}
       </div>
 
+      {/* Footer */}
+      <footer className="relative z-10 mt-8 py-5 border-t border-dark-700/50 no-print">
+        <p className="text-center text-xs text-gray-700">
+          Dashboard diseñado y desarrollado por{' '}
+          <a
+            href="https://innovarketing.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-600 hover:text-accent-cyan transition-colors"
+          >
+            Javier Vrandečić
+          </a>
+          {' '}— Consultor en Automatización IA |{' '}
+          <a
+            href="https://innovarketing.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-600 hover:text-accent-cyan transition-colors"
+          >
+            Innovarketing
+          </a>
+        </p>
+      </footer>
+
       <Toaster
         position="top-right"
         toastOptions={{

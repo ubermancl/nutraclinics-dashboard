@@ -1,7 +1,16 @@
 import { useState, useRef } from 'react';
-import { RefreshCw, LogOut, Wifi, WifiOff, Calendar, X } from 'lucide-react';
+import { RefreshCw, LogOut, Wifi, WifiOff, Calendar, X, Lock, FileDown } from 'lucide-react';
 import { Button, Select } from './ui';
-import { formatDateTime } from '../utils/formatters';
+import { formatDateTime, formatDate } from '../utils/formatters';
+import { CLIENT_CONFIG } from '../config/client';
+
+const UPGRADE_URL = 'https://wa.link/su2ie7';
+
+const PERIOD_LABELS = {
+  today: 'Hoy',
+  week: 'Esta semana',
+  month: 'Este mes',
+};
 
 const DateInput = ({ value, onChange, placeholder }) => {
   const inputRef = useRef(null);
@@ -72,21 +81,30 @@ export default function Header({
     }
   };
 
+  const periodLabel = dateFilter === 'custom' && customDateRange.start && customDateRange.end
+    ? `${formatDate(customDateRange.start)} → ${formatDate(customDateRange.end)}`
+    : (PERIOD_LABELS[dateFilter] || 'Este mes');
+
   return (
     <header className="bg-dark-800/80 backdrop-blur-md border-b border-dark-700 sticky top-0 z-40">
       <div className="px-4 md:px-6 py-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           {/* Logo y título */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-cyan to-accent-magenta flex items-center justify-center text-2xl">
-              🥗
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-cyan to-accent-magenta flex items-center justify-center text-2xl overflow-hidden shrink-0">
+              {CLIENT_CONFIG.logoUrl ? (
+                <img
+                  src={CLIENT_CONFIG.logoUrl}
+                  alt={CLIENT_CONFIG.name}
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              ) : (
+                <span>{CLIENT_CONFIG.logo}</span>
+              )}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-100">
-                NutraClínics
-              </h1>
+              <h1 className="text-xl font-bold text-gray-100">{CLIENT_CONFIG.name}</h1>
               <div className="flex items-center gap-2 text-sm text-gray-400">
-                {/* Indicador de conexión */}
                 {isOnline ? (
                   <span className="flex items-center gap-1 text-accent-green">
                     <Wifi className="w-3 h-3" />
@@ -98,10 +116,12 @@ export default function Header({
                     <span className="hidden sm:inline">Offline</span>
                   </span>
                 )}
+                <span className="text-dark-500">•</span>
+                <span className="text-xs text-gray-500">{periodLabel}</span>
                 {lastUpdated && (
                   <>
-                    <span className="text-dark-500">•</span>
-                    <span className="hidden sm:inline">{formatDateTime(lastUpdated)}</span>
+                    <span className="text-dark-500 hidden sm:inline">•</span>
+                    <span className="hidden sm:inline text-xs">{formatDateTime(lastUpdated)}</span>
                   </>
                 )}
               </div>
@@ -109,7 +129,18 @@ export default function Header({
           </div>
 
           {/* Controles */}
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap no-print">
+            {/* PRO CTA */}
+            <a
+              href={UPGRADE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-accent-magenta/15 text-accent-magenta border border-accent-magenta/30 hover:bg-accent-magenta/25 transition-colors whitespace-nowrap"
+            >
+              <Lock className="w-3 h-3" />
+              Actualizar a PRO
+            </a>
+
             {/* Filtro de fecha */}
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-500" />
@@ -147,7 +178,17 @@ export default function Header({
               </div>
             )}
 
-            {/* Botón actualizar */}
+            {/* Exportar PDF */}
+            <Button
+              variant="secondary"
+              onClick={() => window.print()}
+              title="Exportar como PDF"
+            >
+              <FileDown className="w-4 h-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+
+            {/* Actualizar */}
             <Button
               variant="secondary"
               onClick={onRefresh}
@@ -158,11 +199,8 @@ export default function Header({
               <span className="hidden sm:inline">Actualizar</span>
             </Button>
 
-            {/* Botón cerrar sesión */}
-            <Button
-              variant="ghost"
-              onClick={onLogout}
-            >
+            {/* Salir */}
+            <Button variant="ghost" onClick={onLogout}>
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Salir</span>
             </Button>

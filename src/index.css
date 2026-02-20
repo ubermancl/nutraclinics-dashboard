@@ -142,3 +142,27 @@ body {
 .sidebar-item-active {
   @apply bg-gradient-to-r from-accent-cyan/20 to-transparent border-l-2 border-accent-cyan;
 }
+
+/* Estilos para exportación PDF */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar controles de navegación y CTAs */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Asegurar fondo oscuro en impresión */
+  body {
+    background-color: #0D1117 !important;
+  }
+
+  /* Evitar cortes en medio de cards */
+  .glass-card,
+  [class*="rounded"] {
+    break-inside: avoid;
+  }
+}
