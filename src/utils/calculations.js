@@ -160,13 +160,13 @@ export function calculateFunnel(leads) {
     counts[stage] = leads.filter(lead => validStates.includes(lead['Estado CRM'])).length;
   });
 
-  const totalLeads = leads.length;
+  // El total es el primer paso del funnel
+  const total = counts[FUNNEL_ORDER[0]] || 1;
 
-  const funnelSteps = FUNNEL_ORDER.map((state, index) => {
+  return FUNNEL_ORDER.map((state, index) => {
     const count = counts[state];
-    const percentOfTotal = totalLeads > 0 ? (count / totalLeads) * 100 : 0;
-    // El primer paso se compara contra el total de leads; los siguientes contra el paso anterior
-    const previousCount = index > 0 ? counts[FUNNEL_ORDER[index - 1]] : totalLeads;
+    const percentOfTotal = (count / total) * 100;
+    const previousCount = index > 0 ? counts[FUNNEL_ORDER[index - 1]] : total;
     const conversionFromPrevious = previousCount > 0
       ? (count / previousCount) * 100
       : 100;
@@ -178,11 +178,6 @@ export function calculateFunnel(leads) {
       conversionFromPrevious
     };
   });
-
-  return [
-    { state: 'Total Leads', count: totalLeads, percentOfTotal: 100, conversionFromPrevious: 100 },
-    ...funnelSteps,
-  ];
 }
 
 /**
