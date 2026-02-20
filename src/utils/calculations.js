@@ -161,16 +161,33 @@ export function calculateFunnel(leads) {
     counts[stage] = leads.filter(l => (stageReached[stage] || [stage]).includes(l['Estado CRM'])).length;
   });
 
+  const cumulativeLeakedLabels = {
+    'En Conversación': 'descalificados',
+    'Precalificado':   'no recibieron link',
+    'Link Enviado':    'no agendaron',
+    'Agendado':        'no llegaron a asistir',
+    'Asistió':         'no compraron',
+  };
+
   const steps = FUNNEL_ORDER.map((state, index) => {
     const count = counts[state];
     const percentOfTotal = totalLeads > 0 ? (count / totalLeads) * 100 : 0;
     const previousCount = index > 0 ? counts[FUNNEL_ORDER[index - 1]] : totalLeads;
     const conversionFromPrevious = previousCount > 0 ? (count / previousCount) * 100 : 100;
-    return { state, count, percentOfTotal, conversionFromPrevious };
+    const nextCount = index < FUNNEL_ORDER.length - 1 ? counts[FUNNEL_ORDER[index + 1]] : count;
+    const leaked = Math.max(0, count - nextCount);
+    return {
+      state,
+      count,
+      percentOfTotal,
+      conversionFromPrevious,
+      leaked,
+      leakedLabel: leaked > 0 ? (cumulativeLeakedLabels[state] || '') : '',
+    };
   });
 
   return [
-    { state: 'Total Leads', count: totalLeads, percentOfTotal: 100, conversionFromPrevious: 100 },
+    { state: 'Total Leads', count: totalLeads, percentOfTotal: 100, conversionFromPrevious: 100, leaked: 0, leakedLabel: '' },
     ...steps,
   ];
 }
@@ -363,6 +380,13 @@ export function calculateAdvancedMetrics(leads) {
   const peakHour = Object.entries(hourCounts)
     .sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
+  // Tasa de Recuperación (retargeting → compra)
+  const recoveryStates = ['Compró', 'Cliente Activo', 'Plan Terminado', 'Recompró'];
+  const retargetedLeads = leads.filter(l => l['Fecha de último retargeting']);
+  const recoveredLeads = retargetedLeads.filter(l => recoveryStates.includes(l['Estado CRM']));
+  const recoveryRate = retargetedLeads.length > 0 ? recoveredLeads.length / retargetedLeads.length : null;
+  const recoveredRevenue = recoveredLeads.reduce((sum, l) => sum + (parseFloat(l['Monto Venta Cerrada (PEN)']) || 0), 0);
+
   return {
     avgTimeToSchedule,
     noShowRate,
@@ -370,7 +394,11 @@ export function calculateAdvancedMetrics(leads) {
     avgTicket,
     bestDistrict,
     bestDay,
-    peakHour: peakHour !== null ? `${peakHour}:00` : null
+    peakHour: peakHour !== null ? `${peakHour}:00` : null,
+    recoveryRate,
+    recoveredCount: recoveredLeads.length,
+    recoveredRevenue,
+    retargetedCount: retargetedLeads.length,
   };
 }
 
