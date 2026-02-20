@@ -23,9 +23,13 @@ export default function Insights({ insights }) {
     return null;
   }
 
-  // 1 insight visible (el más urgente/prioritario) + 4 bloqueados con datos reales
-  const visibleInsight = insights[0];
-  const dynamicLocked = insights.slice(1, 5);
+  // "Requiere Humano" SIEMPRE visible si existe — pin explícito, no dependemos del sort
+  const urgentInsight = insights.find(i => i.priority === 1);
+  const visibleInsight = urgentInsight || insights[0];
+  const lockedPool = urgentInsight
+    ? insights.filter(i => i.priority !== 1)
+    : insights.slice(1);
+  const dynamicLocked = lockedPool.slice(0, 4);
   const premiumPad = PREMIUM_INSIGHTS.slice(0, Math.max(0, 4 - dynamicLocked.length));
   const lockedInsights = [...dynamicLocked, ...premiumPad];
 
