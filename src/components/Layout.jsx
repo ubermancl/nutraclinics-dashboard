@@ -16,13 +16,13 @@ export default function Layout({ children }) {
         <footer className="mt-8 py-5 border-t border-dark-700/50">
           {/* Versión pantalla */}
           <div className="footer-screen text-center">
-            <p className="text-xs text-gray-700">
+            <p className="text-xs text-gray-400">
               Dashboard elaborado por{' '}
               <a
                 href="https://innovarketing.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 hover:text-accent-cyan transition-colors"
+                className="text-gray-200 font-medium hover:text-accent-cyan transition-colors"
               >
                 Innovarketing.com
               </a>
