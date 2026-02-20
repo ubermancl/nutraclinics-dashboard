@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   calculateMetrics,
   calculateFunnel,
+  calculatePipeline,
   calculateDistribution,
   calculateLeadsByDay,
   calculateAdvancedMetrics,
@@ -15,9 +16,14 @@ export function useStats(leads, dateFilter = 'month', customStart = null, custom
     return calculateMetrics(leads, dateFilter, customStart, customEnd);
   }, [leads, dateFilter, customStart, customEnd]);
 
-  // Datos del funnel
+  // Funnel acumulativo (tasas de conversión históricas)
   const funnelData = useMemo(() => {
     return calculateFunnel(leads);
+  }, [leads]);
+
+  // Pipeline snapshot (dónde está cada lead hoy)
+  const pipelineData = useMemo(() => {
+    return calculatePipeline(leads);
   }, [leads]);
 
   // Distribuciones
@@ -89,6 +95,7 @@ export function useStats(leads, dateFilter = 'month', customStart = null, custom
   return {
     metrics,
     funnelData,
+    pipelineData,
     statusDistribution,
     districtDistribution,
     originDistribution,

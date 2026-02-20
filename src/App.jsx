@@ -98,6 +98,7 @@ function Dashboard() {
         ) : (
           <Charts
             funnelData={stats.funnelData}
+            pipelineData={stats.pipelineData}
             leadsByDay={stats.leadsByDay}
             appointmentsByDay={stats.appointmentsByDay}
             revenueByWeek={stats.revenueByWeek}
