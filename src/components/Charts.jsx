@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   AreaChart, Area,
   LineChart, Line,
@@ -44,41 +44,83 @@ const CustomTooltip = ({ active, payload, label, formatter }) => {
   return null;
 };
 
+// Descripciones para tooltips del funnel
+const FUNNEL_DESCRIPTIONS = {
+  'Total Leads': 'Base del funnel — 100% de referencia. Todos los leads recibidos en el CRM sin importar su estado actual.',
+  'En Conversación': '% del total de leads que inició conversación activa. Es acumulativo: un lead "Precalificado", "Agendado" o "Compró" también cuenta aquí porque pasó por esta etapa.',
+  'Precalificado': '% de los que estuvieron En Conversación que respondieron y superaron la calificación inicial. Acumulativo: incluye los que avanzaron más (Link Enviado, Agendado, Compró...).',
+  'Link Enviado': '% de los Precalificados que recibieron el link de agendamiento. Acumulativo: incluye quienes ya agendaron o compraron.',
+  'Agendado': '% de los que recibieron link que efectivamente agendaron su cita. Acumulativo: incluye quienes asistieron y compraron.',
+  'Asistió': '% de los Agendados que asistieron a la consulta. Acumulativo: incluye también quienes compraron en esa visita.',
+  'Compró': '% de los que Asistieron que adquirieron un plan. Esta es tu tasa de cierre real.',
+};
+
 // Funnel de conversión
 function ConversionFunnel({ data }) {
+  const [hoveredState, setHoveredState] = useState(null);
   const maxCount = data[0]?.count || 1;
 
   return (
-    <div className="space-y-4">
-      {data.map((item, index) => {
-        const widthPercent = (item.count / maxCount) * 100;
-        const color = CHART_COLORS[index % CHART_COLORS.length];
+    <div>
+      <p className="text-xs text-gray-500 mb-4">
+        El % de cada etapa es respecto al paso anterior.{' '}
+        <span className="text-accent-cyan">Pasa el cursor sobre el % para ver la explicación.</span>
+      </p>
+      <div className="space-y-3">
+        {data.map((item, index) => {
+          const widthPercent = (item.count / maxCount) * 100;
+          const color = CHART_COLORS[index % CHART_COLORS.length];
+          const isTotal = item.state === 'Total Leads';
+          const description = FUNNEL_DESCRIPTIONS[item.state];
 
-        return (
-          <div key={item.state} className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-300 font-medium">{item.state}</span>
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-gray-100">{formatNumber(item.count)}</span>
-                {index > 0 && (
-                  <span className="text-xs px-2 py-0.5 rounded bg-dark-600 text-gray-400">
-                    {item.conversionFromPrevious.toFixed(1)}%
+          return (
+            <div key={item.state}>
+              {index === 1 && (
+                <div className="border-t border-dark-600 border-dashed my-3" />
+              )}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className={`font-medium ${isTotal ? 'text-gray-100' : 'text-gray-300'}`}>
+                    {item.state}
                   </span>
-                )}
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-gray-100">{formatNumber(item.count)}</span>
+                    {/* Badge de porcentaje con tooltip */}
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setHoveredState(item.state)}
+                      onMouseLeave={() => setHoveredState(null)}
+                    >
+                      <span className={`text-xs px-2 py-0.5 rounded cursor-help select-none transition-colors ${
+                        isTotal
+                          ? 'bg-accent-cyan/20 text-accent-cyan font-semibold'
+                          : 'bg-dark-600 text-gray-400 hover:bg-dark-500 hover:text-gray-200'
+                      }`}>
+                        {isTotal ? '100%' : `${item.conversionFromPrevious.toFixed(1)}%`}
+                      </span>
+                      {hoveredState === item.state && description && (
+                        <div className="absolute right-0 bottom-full mb-2 z-20 w-72 p-3 rounded-lg bg-dark-900 border border-dark-500 shadow-xl text-xs text-gray-300 leading-relaxed pointer-events-none">
+                          <p className="font-semibold text-gray-100 mb-1">📊 ¿Cómo se calcula?</p>
+                          <p>{description}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="h-8 bg-dark-700 rounded-lg overflow-hidden">
+                  <div
+                    className="h-full rounded-lg transition-all duration-500"
+                    style={{
+                      width: `${widthPercent}%`,
+                      background: `linear-gradient(90deg, ${color} 0%, ${color}80 100%)`,
+                    }}
+                  />
+                </div>
               </div>
             </div>
-            <div className="h-8 bg-dark-700 rounded-lg overflow-hidden">
-              <div
-                className="h-full rounded-lg transition-all duration-500"
-                style={{
-                  width: `${widthPercent}%`,
-                  background: `linear-gradient(90deg, ${color} 0%, ${color}80 100%)`,
-                }}
-              />
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
